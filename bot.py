@@ -182,37 +182,109 @@ def extract_node_info(worldstate: dict, node_id: str) -> dict | None:
 
 def calculate_tier(mission_type: str, node_name: str) -> str:
     """
-    Calcule le tier de l'Arbitration basé sur le type de mission.
-    Basé sur la communauté Warframe Arbitrations.
-    S = Interception, Defense (maps fermées)
-    A = Survival (bonnes maps), Disruption
-    B = Excavation, Infested Salvage, Defection
-    C/D/F = Void Flood, Void Cascade, Void Armageddon, Alchemy
+    Calcule le tier basé sur la carte et le type de mission.
+    Basé sur la communauté Warframe Arbitrations (Vitus Essence/heure).
+    S = Meilleures cartes fermées Défense/Interception
+    A = Bonnes cartes Survie/Disruption
+    B = Cartes correctes
+    C = Cartes moyennes
+    D = Mauvaises cartes
+    F = Pires cartes
     """
-    mission_type = mission_type.upper()
+    node = node_name.upper()
+    mtype = mission_type.upper()
 
-    S_TIER = ["MT_TERRITORY", "MT_DEFENSE", "INTERCEPTION", "DEFENSE"]
-    A_TIER = ["MT_SURVIVAL", "MT_DISRUPTION", "SURVIVAL", "DISRUPTION"]
-    B_TIER = ["MT_EXCAVATE", "MT_INFESTEDSALVAGE", "MT_DEFECTION",
-              "EXCAVATION", "INFESTED SALVAGE", "DEFECTION"]
-    C_TIER = ["MT_MIRROR", "MIRROR DEFENSE"]
-    D_TIER = ["MT_VOID_FLOOD", "MT_VOID_CASCADE", "VOID FLOOD", "VOID CASCADE"]
+    # ── S TIER ── Meilleures cartes fermées (spawns contrôlés, max VE/h)
+    S_NODES = [
+        "AKKAD",        # Eris - Defense - meilleure carte défense
+        "HYDRON",       # Sedna - Defense - 2ème meilleure défense
+        "STÖFLER",      # Lua - Defense
+        "CERBERUS",     # Pluto - Defense
+        "BEREHYNIA",    # Sedna - Interception - meilleure interception
+        "UR",           # Uranus - Interception
+        "LOST PASSAGE", # Lua - Interception
+        "ADRASTEA",     # Jupiter - Interception
+        "CARACOL",      # Saturn - Interception
+    ]
 
-    for t in S_TIER:
-        if t in mission_type:
+    # ── A TIER ── Bonnes cartes (bons spawns mais moins optimales)
+    A_NODES = [
+        "ZABALA",       # Eris - Survival
+        "HIERACON",     # Pluto - Excavation (très bonne)
+        "GABII",        # Ceres - Survival
+        "APOLLO",       # Lua - Disruption
+        "HOREND",       # Eris - Defection (acceptable)
+        "MOT",          # Void - Survival
+        "YURSA",        # Neptune - Defense
+        "PALUS",        # Pluto - Survival
+        "CINXIA",       # Ceres - Interception
+        "TESSERA",      # Venus - Defense
+    ]
+
+    # ── B TIER ── Cartes correctes
+    B_NODES = [
+        "ODIN",         # Mercury - Defense
+        "HELENE",       # Saturn - Defense
+        "CASTA",        # Ceres - Defense
+        "BODE",         # Ceres - Excavation
+        "MALVA",        # Venus - Excavation
+        "LARES",        # Mercury - Defense
+        "WAHIBA",       # Mars - Survival
+        "CAMERIA",      # Jupiter - Survival
+        "SINAI",        # Mars - Defense
+    ]
+
+    # ── C TIER ── Cartes moyennes
+    C_NODES = [
+        "TITAN",        # Saturn - Survival
+        "OPHELIA",      # Uranus - Survival
+        "CALYPSO",      # Saturn - Survival
+        "CYTHEREAN",    # Venus - Interception
+        "HYENA",        # Neptune - Interception
+        "OUTER TERMINUS", # Pluto - Defense
+    ]
+
+    # ── D TIER ── Mauvaises cartes (open tiles, spawns éparpillés)
+    D_NODES = [
+        "UNDERTOW",     # Uranus - Infested Salvage
+        "DIONE",        # Saturn - Defection
+        "DESDEMONA",    # Uranus - Defection
+        "TORMENT",      # Sedna - Defection
+        "CARACOL",      # Saturn - Disruption (open map)
+    ]
+
+    # Vérifie S tier
+    for n in S_NODES:
+        if n in node:
             return "S"
-    for t in A_TIER:
-        if t in mission_type:
+
+    # Vérifie A tier
+    for n in A_NODES:
+        if n in node:
             return "A"
-    for t in B_TIER:
-        if t in mission_type:
+
+    # Vérifie B tier
+    for n in B_NODES:
+        if n in node:
             return "B"
-    for t in C_TIER:
-        if t in mission_type:
+
+    # Vérifie C tier
+    for n in C_NODES:
+        if n in node:
             return "C"
-    for t in D_TIER:
-        if t in mission_type:
+
+    # Vérifie D tier
+    for n in D_NODES:
+        if n in node:
             return "D"
+
+    # Fallback basé sur le type de mission
+    if "INTERCEPTION" in mtype or "DEFENSE" in mtype:
+        return "B"
+    if "SURVIVAL" in mtype or "DISRUPTION" in mtype:
+        return "C"
+    if "EXCAVATION" in mtype:
+        return "C"
     return "F"
 
 # ─────────────────────────── Données Arbitration ─────────────────────────────
@@ -349,7 +421,7 @@ class ArbitrationsCog(commands.Cog):
     # ── Envoi notification ────────────────────────────────────────────────────
 
     async def _notify_now(self, reason: str = ""):
-        """Récupère l'Arbitration et envoie l'embed dans le channel configuré."""
+        """Récupère l'Arbitration et envoie les embeds dans le channel configuré."""
         channel_id = self.config.get("channel_id")
         if not channel_id:
             log.warning("[notify] Aucun channel configuré. Utilisez /setchannel d'abord.")
@@ -357,15 +429,80 @@ class ArbitrationsCog(commands.Cog):
 
         channel = self.bot.get_channel(int(channel_id))
         if not channel:
-            log.error(f"[notify] Channel {channel_id} introuvable (bot absent du serveur ?).")
+            log.error(f"[notify] Channel {channel_id} introuvable.")
             return
 
         log.info(f"[notify] Envoi ({reason}) dans #{channel.name} ({channel_id})")
         try:
+            # Embed 1 : Arbitration actuelle
             data  = await get_current_arbitration()
             embed = build_embed(data)
-            await channel.send(embed=embed)
-            log.info(f"[notify] Embed envoyé avec succès : {data}")
+
+            # Embed 2 : 3 prochaines tier S
+            async with aiohttp.ClientSession() as session:
+                txt        = await fetch_text(session, ARBYS_TXT_URL)
+                worldstate = await fetch_json(session, WORLDSTATE_URL)
+
+            next_s_embed = None
+            if txt and worldstate:
+                current_hour_start = int(time.time() // 3600) * 3600
+                future_nodes = []
+                for line in txt.strip().splitlines():
+                    line = line.strip()
+                    if not line or "," not in line:
+                        continue
+                    parts = line.split(",", 1)
+                    try:
+                        ts      = int(parts[0].strip())
+                        node_id = parts[1].strip()
+                        if ts > current_hour_start:
+                            future_nodes.append((ts, node_id))
+                    except (ValueError, IndexError):
+                        continue
+
+                future_nodes.sort(key=lambda x: x[0])
+
+                s_tier_results = []
+                for ts, node_id in future_nodes:
+                    if len(s_tier_results) >= 3:
+                        break
+                    node_info = extract_node_info(worldstate, node_id)
+                    if not node_info:
+                        continue
+                    tier = calculate_tier(node_info["mission_type"], node_info["node_name"])
+                    if tier == "S":
+                        s_tier_results.append({
+                            "ts":      ts,
+                            "carte":   f"{node_info['node_name']}, {node_info['planet']}",
+                            "faction": node_info["faction"],
+                            "type":    node_info["mission_type"],
+                        })
+
+                if s_tier_results:
+                    next_s_embed = discord.Embed(
+                        title="⭐ Prochaines Tier S",
+                        color=0xFFD700,
+                        timestamp=datetime.now(timezone.utc),
+                    )
+                    for i, arby in enumerate(s_tier_results, 1):
+                        discord_ts = f"<t:{arby['ts']}:R> (<t:{arby['ts']}:t> UTC)"
+                        next_s_embed.add_field(
+                            name=f"#{i} — {arby['carte']}",
+                            value=(
+                                f"🕐 {discord_ts}\n"
+                                f"⚔️ {arby['faction']} • 🎯 {arby['type']}"
+                            ),
+                            inline=False,
+                        )
+                    next_s_embed.set_footer(text="Source: browse.wf | UTC")
+
+            # Envoie les deux embeds ensemble
+            embeds = [embed]
+            if next_s_embed:
+                embeds.append(next_s_embed)
+            await channel.send(embeds=embeds)
+            log.info(f"[notify] Embeds envoyés : {data}")
+
         except discord.Forbidden:
             log.error(f"[notify] Permissions insuffisantes pour écrire dans #{channel.name}.")
         except discord.HTTPException as e:
@@ -411,6 +548,97 @@ class ArbitrationsCog(commands.Cog):
                 "❌ Une erreur inattendue s'est produite.",
                 ephemeral=True,
             )
+    @app_commands.command(    
+        name="nexts",        
+        description="Affiche les 3 prochaines Arbitrations de tier S.",
+    )
+    async def nexts(self, interaction: discord.Interaction):
+        """Cherche les 3 prochaines cartes tier S dans le schedule."""
+        await interaction.response.defer()
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                txt = await fetch_text(session, ARBYS_TXT_URL)
+
+            if not txt:
+                await interaction.followup.send("❌ Impossible de récupérer le schedule.", ephemeral=True)
+                return
+
+            now = int(time.time())
+            current_hour_start = int(now // 3600) * 3600
+
+            future_nodes = []
+            for line in txt.strip().splitlines():
+                line = line.strip()
+                if not line or "," not in line:
+                    continue
+                parts = line.split(",", 1)
+                try:
+                    ts = int(parts[0].strip())
+                    node_id = parts[1].strip()
+                    if ts >= current_hour_start:
+                        future_nodes.append((ts, node_id))
+                except (ValueError, IndexError):
+                    continue
+
+            future_nodes.sort(key=lambda x: x[0])
+
+            async with aiohttp.ClientSession() as session:
+                worldstate = await fetch_json(session, WORLDSTATE_URL)
+
+            if not worldstate:
+                await interaction.followup.send("❌ Impossible de récupérer le worldstate.", ephemeral=True)
+                return
+
+            s_tier_results = []
+            for ts, node_id in future_nodes:
+                if len(s_tier_results) >= 3:
+                    break
+                node_info = extract_node_info(worldstate, node_id)
+                if not node_info:
+                    continue
+                tier = calculate_tier(node_info["mission_type"], node_info["node_name"])
+                if tier == "S":
+                    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+                    s_tier_results.append({
+                        "ts":      ts,
+                        "dt":      dt,
+                        "carte":   f"{node_info['node_name']}, {node_info['planet']}",
+                        "faction": node_info["faction"],
+                        "type":    node_info["mission_type"],
+                    })
+
+            if not s_tier_results:
+                await interaction.followup.send("😔 Aucune Arbitration tier S trouvée dans les prochaines heures.")
+                return
+
+            embed = discord.Embed(
+                title="⭐ Prochaines Arbitrations Tier S",
+                color=0xFFD700,
+                timestamp=datetime.now(timezone.utc),
+            )
+            embed.set_thumbnail(url=THUMBNAIL_URL)
+
+            for i, arby in enumerate(s_tier_results, 1):
+                discord_ts = f"<t:{arby['ts']}:R> (<t:{arby['ts']}:t> UTC)"
+                embed.add_field(
+                    name=f"#{i} — {arby['carte']}",
+                    value=(
+                        f"🕐 {discord_ts}\n"
+                        f"⚔️ {arby['faction']} • 🎯 {arby['type']}"
+                    ),
+                    inline=False,
+                )
+
+            embed.set_footer(text="Source: browse.wf | UTC")
+            await interaction.followup.send(embed=embed)
+            log.info(f"[nexts] {len(s_tier_results)} résultats envoyés à {interaction.user}")
+
+        except Exception as e:
+            log.error(f"[nexts] Erreur : {e}", exc_info=True)
+            await interaction.followup.send("❌ Une erreur inattendue s'est produite.", ephemeral=True)
+
+    
 
 
 # ─────────────────────────── Bot setup ───────────────────────────────────────

@@ -425,20 +425,23 @@ class ArbitrationsCog(commands.Cog):
     @hourly_loop.before_loop
     async def before_hourly_loop(self):
         """
-        Attend que le bot soit prêt, puis calcule le délai jusqu'à la prochaine
-        heure pile UTC pour aligner la loop.
+        Attend que le bot soit prêt, puis calcule le délai jusqu'à H:02 UTC
+        pour laisser le temps au site de s'actualiser.
         """
         await self.bot.wait_until_ready()
 
         now     = time.time()
-        # Secondes écoulées depuis le début de l'heure courante
         elapsed = now % 3600
-        # Secondes à attendre pour atteindre la prochaine heure pile
-        delay   = 3600 - elapsed
+        # Attend H:02 (120 secondes après l'heure pile)
+        delay   = 3600 - elapsed + 120
+
+        # Si on est déjà passé H:02, attend la prochaine heure
+        if elapsed > 120:
+            delay = 3600 - elapsed + 120
 
         next_dt = datetime.fromtimestamp(now + delay, tz=timezone.utc)
         log.info(f"[before_loop] Prochaine notification à {next_dt.strftime('%Y-%m-%d %H:%M:%S UTC')} "
-                 f"(dans {delay:.0f}s)")
+                f"(dans {delay:.0f}s)")
         await asyncio.sleep(delay)
 
     # ── Envoi notification ────────────────────────────────────────────────────

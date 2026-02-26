@@ -182,110 +182,133 @@ def extract_node_info(worldstate: dict, node_id: str) -> dict | None:
 
 def calculate_tier(mission_type: str, node_name: str) -> str:
     """
-    Calcule le tier basé sur la carte et le type de mission.
-    Basé sur la communauté Warframe Arbitrations (Vitus Essence/heure).
-    S = Meilleures cartes fermées Défense/Interception
-    A = Bonnes cartes Survie/Disruption
-    B = Cartes correctes
-    C = Cartes moyennes
-    D = Mauvaises cartes
-    F = Pires cartes
+    Tier basé sur la liste communautaire Warframe Arbitrations.
+    Source : browse.wf/arbys
     """
     node = node_name.upper()
-    mtype = mission_type.upper()
 
-    # ── S TIER ── Meilleures cartes fermées (spawns contrôlés, max VE/h)
+    # ── S TIER ──
     S_NODES = [
-        "AKKAD",        # Eris - Defense - meilleure carte défense
-        "HYDRON",       # Sedna - Defense - 2ème meilleure défense
-        "STÖFLER",      # Lua - Defense
-        "CERBERUS",     # Pluto - Defense
-        "BEREHYNIA",    # Sedna - Interception - meilleure interception
-        "UR",           # Uranus - Interception
-        "LOST PASSAGE", # Lua - Interception
-        "ADRASTEA",     # Jupiter - Interception
-        "CARACOL",      # Saturn - Interception
+        "CINXIA",    # Ceres - Interception - Grineer
+        "SEIMENI",   # Ceres - Defense - Infestation
+        "CASTA",     # Ceres - Defense - Grineer
+        "ALATOR",    # Mars - Interception - Grineer
     ]
 
-    # ── A TIER ── Bonnes cartes (bons spawns mais moins optimales)
+    # ── A TIER ──
     A_NODES = [
-        "ZABALA",       # Eris - Survival
-        "HIERACON",     # Pluto - Excavation (très bonne)
-        "GABII",        # Ceres - Survival
-        "APOLLO",       # Lua - Disruption
-        "HOREND",       # Eris - Defection (acceptable)
-        "MOT",          # Void - Survival
-        "YURSA",        # Neptune - Defense
-        "PALUS",        # Pluto - Survival
-        "CINXIA",       # Ceres - Interception
-        "TESSERA",      # Venus - Defense
+        "ODIN",      # Mercury - Interception - Grineer
+        "CALLISTO",  # Jupiter - Interception - Corpus
+        "LARZAC",    # Europa - Defense - Infestation
+        "HYDRON",    # Sedna - Defense - Grineer
+        "SECHURA",   # Pluto - Defense - Infestation
+        "HELENE",    # Saturn - Defense - Grineer
     ]
 
-    # ── B TIER ── Cartes correctes
+    # ── B TIER ──
     B_NODES = [
-        "ODIN",         # Mercury - Defense
-        "HELENE",       # Saturn - Defense
-        "CASTA",        # Ceres - Defense
-        "BODE",         # Ceres - Excavation
-        "MALVA",        # Venus - Excavation
-        "LARES",        # Mercury - Defense
-        "WAHIBA",       # Mars - Survival
-        "CAMERIA",      # Jupiter - Survival
-        "SINAI",        # Mars - Defense
+        "SINAI",          # Jupiter - Defense - Infestation
+        "KADESH",         # Mars - Defense - Infestation
+        "TESSERA",        # Venus - Defense - Corpus
+        "PAIMON",         # Europa - Defense - Corpus
+        "IO",             # Jupiter - Defense - Corpus
+        "HYF",            # Deimos - Defense - Infestation
+        "OUTER TERMINUS", # Pluto - Defense - Corpus
+        "SPEAR",          # Mars - Defense - Grineer
+        "TYANA PASS",     # Mars - Mirror Defense - Corpus
+        "MUNIO",          # Deimos - Mirror Defense - The Murmur
     ]
 
-    # ── C TIER ── Cartes moyennes
+    # ── C TIER ──
     C_NODES = [
-        "TITAN",        # Saturn - Survival
-        "OPHELIA",      # Uranus - Survival
-        "CALYPSO",      # Saturn - Survival
-        "CYTHEREAN",    # Venus - Interception
-        "HYENA",        # Neptune - Interception
-        "OUTER TERMINUS", # Pluto - Defense
+        "BEREHYNIA",  # Sedna - Interception - Grineer
+        "BELENUS",    # Void - Defense - Orokin
+        "STÖFLER",    # Lua - Defense - Grineer
+        "UMBRIEL",    # Uranus - Interception - Grineer
+        "STEPHANO",   # Uranus - Defense - Grineer
+        "LITH",       # Earth - Defense - Grineer
+        "CERBERUS",   # Pluto - Interception
+        "LARES",      # Mercury - Defense - Infestation
+        "SANGERU",    # Sedna - Defense - Infestation
+        "AKKAD",      # Eris - Defense - Infestation
+        "KALA-AZAR",  # Eris - Defense - Infestation
+        "OSE",        # Europa - Interception - Corpus
+        "CYTHEREAN",  # Venus - Interception - Corpus
+        "GAIA",       # Earth - Interception - Grineer
+        "PROTEUS",    # Neptune - Defense - Corpus
+        "GULLIVER",   # Phobos - Defense - Corpus
+        "ROMULA",     # Venus - Defense - Infestation
     ]
 
-    # ── D TIER ── Mauvaises cartes (open tiles, spawns éparpillés)
+    # ── D TIER ──
     D_NODES = [
-        "UNDERTOW",     # Uranus - Infested Salvage
-        "DIONE",        # Saturn - Defection
-        "DESDEMONA",    # Uranus - Defection
-        "TORMENT",      # Sedna - Defection
-        "CARACOL",      # Saturn - Disruption (open map)
+        "OESTRUS",    # Eris - Infested Salvage
+        "DESPINA",    # Neptune - Excavation
+        "VALEFOR",    # Europa - Excavation
+        "KILIKEN",    # Venus - Excavation
+        "AUGUSTUS",   # Mars - Excavation
+        "CHOLISTAN",  # Europa - Excavation
+        "TIKAL",      # Earth - Excavation
+        "STICKNEY",   # Phobos - Survival
+        "V PRIME",    # Venus - Survival
+        "TYCHO",      # Lua - Survival
+        "PALUS",      # Pluto - Survival
+        "ELARA",      # Jupiter - Survival
+        "SELKIE",     # Sedna - Survival
+        "TITAN",      # Saturn - Survival
+        "DRACO",      # Ceres - Survival
+        "ANI",        # Void - Survival
+        "MOT",        # Void - Survival
+        "YUVARIUM",   # Lua - Conjunction Survival
     ]
 
-    # Vérifie S tier
+    # ── F TIER ──
+    F_NODES = [
+        "EVEREST",        # Earth - Excavation
+        "APOLLO",         # Lua - Disruption
+        "TERROREM",       # Deimos - Survival
+        "HIERACON",       # Pluto - Excavation
+        "GABII",          # Ceres - Survival
+        "ZABALA",         # Eris - Survival
+        "CAMERIA",        # Jupiter - Survival
+        "PISCINAS",       # Saturn - Survival
+        "KELASHIN",       # Neptune - Survival
+        "ASSUR",          # Uranus - Survival
+        "NIMUS",          # Eris - Survival
+        "AMARNA",         # Sedna - Survival
+        "ZEUGMA",         # Phobos - Survival
+        "MALVA",          # Venus - Survival
+        "WAHIBA",         # Mars - Survival
+        "COBA",           # Earth - Defense
+        "LAOMEDEIA",      # Neptune - Disruption
+        "GANYMEDE",       # Jupiter - Disruption
+        "UR",             # Uranus - Disruption
+        "TUVUL COMMONS",  # Zariman - Void Cascade
+        "ORO WORKS",      # Zariman - Void Armageddon
+        "EVERVIEW ARC",   # Zariman - Void Flood
+        "CAMBIRE",        # Deimos
+    ]
+
     for n in S_NODES:
         if n in node:
             return "S"
-
-    # Vérifie A tier
     for n in A_NODES:
         if n in node:
             return "A"
-
-    # Vérifie B tier
     for n in B_NODES:
         if n in node:
             return "B"
-
-    # Vérifie C tier
     for n in C_NODES:
         if n in node:
             return "C"
-
-    # Vérifie D tier
     for n in D_NODES:
         if n in node:
             return "D"
+    for n in F_NODES:
+        if n in node:
+            return "F"
 
-    # Fallback basé sur le type de mission
-    if "INTERCEPTION" in mtype or "DEFENSE" in mtype:
-        return "B"
-    if "SURVIVAL" in mtype or "DISRUPTION" in mtype:
-        return "C"
-    if "EXCAVATION" in mtype:
-        return "C"
-    return "F"
+    return "?"
 
 # ─────────────────────────── Données Arbitration ─────────────────────────────
 
